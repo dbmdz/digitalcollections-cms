@@ -14,6 +14,10 @@
   <packaging>jar</packaging>
 
   <properties>
+    <db.driver>org.postgresql.Driver</db.driver>
+    <db.url>jdbc:postgresql://localhost:22222/cudami</db.url>
+    <db.username>cudami</db.username>
+    <db.password>somepassword</db.password>
     <version.dc-commons-jdbi>4.1.2</version.dc-commons-jdbi>
     <version.jdbi>3.14.4</version.jdbi>
   </properties>
@@ -61,6 +65,14 @@
       <version>${version.jdbi}</version>
     </dependency>
     <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq-meta</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq-codegen</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
     </dependency>
@@ -87,6 +99,10 @@
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jooq</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.data</groupId>
       <artifactId>spring-data-jdbc</artifactId>
     </dependency>
@@ -95,4 +111,74 @@
       <artifactId>spring-security-web</artifactId>
     </dependency>
   </dependencies>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <configuration>
+          <onlyAnalyze>de.digitalcollections.cudami.server.backend.impl.jdbi.*</onlyAnalyze>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <profiles>
+    <profile>
+      <id>codegen</id>
+      <build>
+    
+        <plugins>
+          <!--      <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>properties-maven-plugin</artifactId>
+            <version>1.0.0</version>
+            <executions>
+              <execution>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>read-project-properties</goal>
+                </goals>
+                <configuration>
+                  <files>
+                    <file>src/main/resources/jooq_config.properties</file>
+                  </files>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>-->
+          <plugin>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq-codegen-maven</artifactId>
+            <executions>
+              <execution>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+                <configuration>
+                  <jdbc>
+                    <driver>${db.driver}</driver>
+                    <url>${db.url}</url>
+                    <user>${db.username}</user>
+                    <password>${db.password}</password>
+                  </jdbc>
+                  <generator>
+                    <database>
+                      <inputSchema>public</inputSchema>
+                    </database>
+                    <target>
+                      <packageName>de.digitalcollections.cudami.server.backend.impl.jooq.db</packageName>
+                      <directory>target/generated-sources/jooq</directory>
+                    </target>
+                  </generator>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
