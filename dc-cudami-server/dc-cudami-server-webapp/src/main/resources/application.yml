@@ -67,6 +67,8 @@ spring:
     out-of-order: true
     placeholders:
       iiifBaseUrl: "${iiif.image.baseUrl}"
+  jooq:
+    sql-dialect: Postgres
   main:
     banner-mode: 'off'
   profiles:

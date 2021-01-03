@@ -34,6 +34,13 @@ public class PersonServiceImpl extends IdentifiableServiceImpl<Person> implement
   }
 
   @Override
+  public PageResponse<Person> findByLocationOfBirth(PageRequest pageRequest, UUID uuidGeoLocation) {
+    PageResponse<Person> result =
+        ((PersonRepository) repository).findByLocationOfBirth(pageRequest, uuidGeoLocation);
+    return result;
+  }
+
+  @Override
   public Set<Work> getWorks(Person person) {
     return PersonService.super.getWorks(person);
   }

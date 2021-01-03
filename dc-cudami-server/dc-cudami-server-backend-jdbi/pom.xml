@@ -82,6 +82,21 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.modelmapper.extensions</groupId>
+      <artifactId>modelmapper-jooq</artifactId>
+      <version>2.3.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.modelmapper</groupId>
+      <artifactId>modelmapper-module-jsr310</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.modelmapper</groupId>
+      <artifactId>modelmapper-module-java8-datatypes</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
@@ -170,7 +185,7 @@
                     </database>
                     <target>
                       <packageName>de.digitalcollections.cudami.server.backend.impl.jooq.db</packageName>
-                      <directory>target/generated-sources/jooq</directory>
+                      <directory>src/main/java/de/digitalcollections/cudami/server/backend/impl/jooq</directory>
                     </target>
                   </generator>
                 </configuration>

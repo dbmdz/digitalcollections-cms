@@ -81,6 +81,30 @@ public class PersonController {
     return personService.findByLanguageAndInitial(pageRequest, language, initial);
   }
 
+  @ApiMethod(description = "get all persons born at given geo location")
+  @GetMapping(
+      value = {"/latest/persons/placeOfBirth/{uuid}", "/v2/persons/placeOfBirth/{uuid}"},
+      produces = "application/json")
+  @ApiResponseObject
+  public PageResponse<Person> getByPlaceOfBirth(
+      @ApiPathParam(
+              description =
+                  "UUID of the geo location of birth, e.g. <tt>599a120c-2dd5-11e8-b467-0ed5f89f718b</tt>")
+          @PathVariable("uuid")
+          UUID uuid,
+      @RequestParam(name = "pageNumber", required = false, defaultValue = "0") int pageNumber,
+      @RequestParam(name = "pageSize", required = false, defaultValue = "5") int pageSize,
+      @RequestParam(name = "sortField", required = false, defaultValue = "uuid") String sortField,
+      @RequestParam(name = "sortDirection", required = false, defaultValue = "ASC")
+          Direction sortDirection,
+      @RequestParam(name = "nullHandling", required = false, defaultValue = "NATIVE")
+          NullHandling nullHandling) {
+    OrderImpl order = new OrderImpl(sortDirection, sortField, nullHandling);
+    Sorting sorting = new SortingImpl(order);
+    PageRequest pageRequest = new PageRequestImpl(pageNumber, pageSize, sorting);
+    return personService.findByLocationOfBirth(pageRequest, uuid);
+  }
+
   @ApiMethod(
       description =
           "get a person as JSON or XML, depending on extension or <tt>format</tt> request parameter or accept header")

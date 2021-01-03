@@ -56,6 +56,12 @@ public class CudamiPersonsClient extends CudamiBaseClient<PersonImpl> {
         initial);
   }
 
+  public PageResponse<PersonImpl> findByLocationOfBirth(
+      PageRequest pageRequest, UUID uuidGeoLocation) throws HttpException {
+    return doGetRequestForPagedObjectList(
+        "/latest/persons/placeOfBirth/" + uuidGeoLocation.toString(), pageRequest);
+  }
+
   public Person findOne(UUID uuid) throws HttpException {
     return doGetRequestForObject(String.format("/latest/persons/%s", uuid));
   }

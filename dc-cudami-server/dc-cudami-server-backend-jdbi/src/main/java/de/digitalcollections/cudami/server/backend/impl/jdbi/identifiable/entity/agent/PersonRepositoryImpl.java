@@ -1,13 +1,18 @@
 package de.digitalcollections.cudami.server.backend.impl.jdbi.identifiable.entity.agent;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.digitalcollections.cudami.server.backend.api.repository.identifiable.IdentifierRepository;
 import de.digitalcollections.cudami.server.backend.api.repository.identifiable.entity.agent.PersonRepository;
 import de.digitalcollections.cudami.server.backend.impl.jdbi.identifiable.IdentifiableRepositoryImpl;
+import de.digitalcollections.cudami.server.backend.impl.jooq.db.tables.Persons;
+import de.digitalcollections.cudami.server.backend.impl.jooq.db.tables.records.PersonsRecord;
 import de.digitalcollections.model.api.identifiable.Identifier;
 import de.digitalcollections.model.api.identifiable.entity.DigitalObject;
 import de.digitalcollections.model.api.identifiable.entity.agent.Agent;
 import de.digitalcollections.model.api.identifiable.entity.agent.Person;
 import de.digitalcollections.model.api.identifiable.entity.work.Work;
+import de.digitalcollections.model.api.identifiable.parts.LocalizedText;
 import de.digitalcollections.model.api.paging.PageRequest;
 import de.digitalcollections.model.api.paging.PageResponse;
 import de.digitalcollections.model.impl.identifiable.IdentifierImpl;
@@ -27,10 +32,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.BeanMapper;
+import org.jooq.DSLContext;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
@@ -38,9 +46,21 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PersonRepositoryImpl.class);
 
+  private final DSLContext jooq;
+  private final ModelMapper modelMapper;
+  private final ObjectMapper objectMapper;
+
   @Autowired
-  public PersonRepositoryImpl(Jdbi dbi, IdentifierRepository identifierRepository) {
+  public PersonRepositoryImpl(
+      Jdbi dbi,
+      DSLContext jooq,
+      ModelMapper modelMapper,
+      ObjectMapper objectMapper,
+      IdentifierRepository identifierRepository) {
     super(dbi, identifierRepository);
+    this.jooq = jooq;
+    this.modelMapper = modelMapper;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -227,6 +247,39 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
 
     PageResponse pageResponse = new PageResponseImpl(result, pageRequest, total);
     return pageResponse;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public PageResponse<Person> findByLocationOfBirth(PageRequest pageRequest, UUID uuidGeoLocation) {
+    List<PersonsRecord> queryResults =
+        jooq.selectFrom(Persons.PERSONS)
+            .where(Persons.PERSONS.LOCATIONOFBIRTH.eq(uuidGeoLocation))
+            .fetchInto(PersonsRecord.class);
+    List<Person> personEntries = convertRecordsToModelObjects(queryResults);
+    return new PageResponseImpl<>(personEntries);
+  }
+
+  private List<Person> convertRecordsToModelObjects(List<PersonsRecord> records) {
+    List<Person> objects = new ArrayList<>();
+    for (PersonsRecord record : records) {
+      Person person = convertRecordToModelObject(record);
+      objects.add(person);
+    }
+    return objects;
+  }
+
+  private Person convertRecordToModelObject(PersonsRecord record) {
+    PersonImpl person = modelMapper.map(record, PersonImpl.class);
+    try {
+      // FIXME model mapper does only map refid, all other fields are empty (need specified
+      // mappers?)
+      person.setLabel(objectMapper.readValue(record.getLabel().data(), LocalizedText.class));
+
+    } catch (JsonProcessingException ex) {
+      LOGGER.error("Error mapping record to object");
+    }
+    return person;
   }
 
   @Override
@@ -518,11 +571,9 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
     // save given names
     //    List<GivenName> givenNames = person.getGivenNames();
     //    saveRelatedGivenNames(givenNames, person);
-
     // save family names
     //    List<FamilyName> familyNames = person.getFamilyNames();
     //    saveRelatedFamilyNames(familyNames, person);
-
     Person result = findOne(person.getUuid());
     return result;
   }
@@ -537,7 +588,6 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
   //      }
   //    }
   //  }
-
   //  private void saveRelatedFamilyNames(List<FamilyName> familyNames, Person person) {
   //    // we assume that relations are new (existing ones were deleted before (e.g. see update))
   //    if (familyNames != null) {
@@ -557,7 +607,6 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
   //      });
   //    }
   //  }
-
   //  private void saveRelatedGivenNames(List<GivenName> givenNames, Person person) {
   //    // we assume that relations are new (existing ones were deleted before (e.g. see update))
   //    if (givenNames != null) {
@@ -577,7 +626,6 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
   //      });
   //    }
   //  }
-
   @Override
   public Person update(Person person) {
     person.setLastModified(LocalDateTime.now());
@@ -624,14 +672,12 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
     //    dbi.withHandle(h -> h.createUpdate("DELETE FROM rel_person_givennames WHERE person_uuid =
     // :uuid").bind("uuid", person.getUuid()).execute());
     //    saveRelatedGivenNames(givenNames, person);
-
     // save family names
     //    List<FamilyName> familyNames = person.getFamilyNames();
     //    // as we store the whole list new: delete old entries
     //    dbi.withHandle(h -> h.createUpdate("DELETE FROM rel_person_familynames WHERE person_uuid =
     // :uuid").bind("uuid", person.getUuid()).execute());
     //    saveRelatedFamilyNames(familyNames, person);
-
     Person result = findOne(person.getUuid());
     return result;
   }

@@ -9,10 +9,14 @@ import javax.sql.DataSource;
 import org.jdbi.v3.postgres.PostgresPlugin;
 import org.jdbi.v3.spring4.JdbiFactoryBean;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+import org.jooq.SQLDialect;
 import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultDSLContext;
 import org.jooq.impl.DefaultExecuteListenerProvider;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.jooq.RecordValueReader;
+import org.modelmapper.module.jsr310.Jsr310Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +85,14 @@ public class SpringConfigBackendDatabase {
     return new ExceptionTranslator();
   }
 
+  @Bean
+  public ModelMapper modelMapper() {
+    ModelMapper modelMapper = new ModelMapper();
+    modelMapper.getConfiguration().addValueReader(new RecordValueReader());
+    modelMapper.registerModule(new Jsr310Module());
+    return modelMapper;
+  }
+
   public DefaultConfiguration configuration() {
     //    org.jooq.meta.jaxb.Configuration configuration =
     //        new org.jooq.meta.jaxb.Configuration()
@@ -111,6 +123,7 @@ public class SpringConfigBackendDatabase {
     //    }
 
     DefaultConfiguration jooqConfiguration = new DefaultConfiguration();
+    jooqConfiguration.setSQLDialect(SQLDialect.POSTGRES);
     jooqConfiguration.set(connectionProvider());
     jooqConfiguration.set(new DefaultExecuteListenerProvider(exceptionTransformer()));
     return jooqConfiguration;
