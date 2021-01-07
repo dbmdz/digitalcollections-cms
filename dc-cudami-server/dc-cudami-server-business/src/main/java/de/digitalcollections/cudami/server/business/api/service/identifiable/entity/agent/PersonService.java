@@ -16,6 +16,8 @@ public interface PersonService extends IdentifiableService<Person> {
 
   public PageResponse<Person> findByLocationOfBirth(PageRequest pageRequest, UUID uuid);
 
+  public PageResponse<Person> findByLocationOfDeath(PageRequest pageRequest, UUID uuid);
+
   default Set<Work> getWorks(Person person) {
     if (person == null) {
       return null;

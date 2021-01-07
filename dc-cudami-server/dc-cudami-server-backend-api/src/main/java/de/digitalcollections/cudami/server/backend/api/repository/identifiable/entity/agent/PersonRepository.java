@@ -16,6 +16,8 @@ public interface PersonRepository extends IdentifiableRepository<Person> {
 
   PageResponse<Person> findByLocationOfBirth(PageRequest pageRequest, UUID uuidGeoLocation);
 
+  PageResponse<Person> findByLocationOfDeath(PageRequest pageRequest, UUID uuidGeoLocation);
+
   default Set<Work> getWorks(Person person) {
     if (person == null) {
       return null;

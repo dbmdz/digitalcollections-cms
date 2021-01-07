@@ -66,11 +66,18 @@
     </dependency>
     <dependency>
       <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+      <version>3.14.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jooq</groupId>
       <artifactId>jooq-meta</artifactId>
+      <version>3.14.4</version>
     </dependency>
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq-codegen</artifactId>
+      <version>3.14.4</version>
     </dependency>
     <dependency>
       <groupId>org.json</groupId>
@@ -89,12 +96,12 @@
     <dependency>
       <groupId>org.modelmapper</groupId>
       <artifactId>modelmapper-module-jsr310</artifactId>
-      <version>1.2.2</version>
+      <version>1.2.3-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.modelmapper</groupId>
       <artifactId>modelmapper-module-java8-datatypes</artifactId>
-      <version>1.2.2</version>
+      <version>1.2.3-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -124,6 +131,11 @@
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+      <version>3.13.6</version>
     </dependency>
   </dependencies>
   
@@ -163,6 +175,25 @@
               </execution>
             </executions>
           </plugin>-->
+          <!-- FIXME: can not handle multiple profiles yml: -->
+<!--          <plugin>
+            <groupId>it.ozimov</groupId>
+            <artifactId>yaml-properties-maven-plugin</artifactId>
+            <version>1.1.3</version>
+            <executions>
+              <execution>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>read-project-properties</goal>
+                </goals>
+                <configuration>
+                  <files>
+                    <file>../dc-cudami-server-webapp/src/main/resources/application.yml</file>
+                  </files>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>-->
           <plugin>
             <groupId>org.jooq</groupId>
             <artifactId>jooq-codegen-maven</artifactId>
@@ -174,6 +205,12 @@
                 </goals>
                 <configuration>
                   <jdbc>
+                    <!--
+                    <driver>${spring.datasource.driverClassName}</driver>
+                    <url>${spring.datasource.url}</url>
+                    <user>${spring.datasource.username}</user>
+                    <password>${spring.datasource.password}</password>
+                    -->
                     <driver>${db.driver}</driver>
                     <url>${db.url}</url>
                     <user>${db.username}</user>

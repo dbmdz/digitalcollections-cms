@@ -76,8 +76,8 @@ public class SpringConfigBackendDatabase {
   }
 
   @Bean
-  public DefaultDSLContext dsl() {
-    return new DefaultDSLContext(configuration());
+  public DefaultDSLContext dsl(org.jooq.Configuration configuration) {
+    return new DefaultDSLContext(configuration);
   }
 
   @Bean
@@ -89,43 +89,73 @@ public class SpringConfigBackendDatabase {
   public ModelMapper modelMapper() {
     ModelMapper modelMapper = new ModelMapper();
     modelMapper.getConfiguration().addValueReader(new RecordValueReader());
+    modelMapper.getConfiguration().setSkipNullEnabled(true);
     modelMapper.registerModule(new Jsr310Module());
     return modelMapper;
   }
 
-  public DefaultConfiguration configuration() {
-    //    org.jooq.meta.jaxb.Configuration configuration =
-    //        new org.jooq.meta.jaxb.Configuration()
-    //            .withJdbc(
-    //                new Jdbc()
-    //                    .withDriver("org.postgresql.Driver")
-    //                    .withUrl(datasourceUrl)
-    //                    .withUser(datasourceUsername)
-    //                    .withPassword(datasourcePassword))
-    //            .withGenerator(
-    //                new Generator()
-    //                    .withDatabase(
-    //                        new Database()
-    //                            .withName("org.jooq.meta.postgres.PostgresDatabase")
-    //                            .withIncludes(".*")
-    //                            .withExcludes("")
-    //                            .withInputSchema("public"))
-    //                    .withTarget(
-    //                        new Target()
-    //                            .withPackageName(
-    //                                "de.digitalcollections.cudami.server.backend.impl.jooq")
-    //                            .withDirectory("target/generated-sources/jooq")));
-    //
-    //    try {
-    //      GenerationTool.generate(configuration);
-    //    } catch (Exception ex) {
-    //      LOGGER.error("JOOQ code generation failed!", ex);
-    //    }
+  @Bean
+  public JsonConverterProvider converterProvider(ObjectMapper mapper) {
+    return new JsonConverterProvider(mapper);
+  }
 
+  @Bean
+  public DefaultConfiguration configuration(JsonConverterProvider converterProvider) {
+    //    //    org.jooq.meta.jaxb.Configuration configuration =
+    //    //        new org.jooq.meta.jaxb.Configuration()
+    //    //            .withJdbc(
+    //    //                new Jdbc()
+    //    //                    .withDriver("org.postgresql.Driver")
+    //    //                    .withUrl(datasourceUrl)
+    //    //                    .withUser(datasourceUsername)
+    //    //                    .withPassword(datasourcePassword))
+    //    //            .withGenerator(
+    //    //                new Generator()
+    //    //                    .withDatabase(
+    //    //                        new Database()
+    //    //                            .withName("org.jooq.meta.postgres.PostgresDatabase")
+    //    //                            .withIncludes(".*")
+    //    //                            .withExcludes("")
+    //    //                            .withInputSchema("public"))
+    //    //                    .withTarget(
+    //    //                        new Target()
+    //    //                            .withPackageName(
+    //    //                                "de.digitalcollections.cudami.server.backend.impl.jooq")
+    //    //                            .withDirectory("target/generated-sources/jooq")));
+    //    //
+    //    //    try {
+    //    //      GenerationTool.generate(configuration);
+    //    //    } catch (Exception ex) {
+    //    //      LOGGER.error("JOOQ code generation failed!", ex);
+    //    //    }
+    //
     DefaultConfiguration jooqConfiguration = new DefaultConfiguration();
     jooqConfiguration.setSQLDialect(SQLDialect.POSTGRES);
     jooqConfiguration.set(connectionProvider());
     jooqConfiguration.set(new DefaultExecuteListenerProvider(exceptionTransformer()));
+    // NOTE: did not help in mapping LocalizedText field (is not called during fetch)
+    //    jooqConfiguration.set(converterProvider);
+
+    //    jooqConfiguration.set(
+    //            // NOTE: did not help on field level (LocalizedText9 as it only maps records
+    // (Person, etc.)
+    //        new RecordMapperProvider() {
+    //          @Override
+    //          public <R extends Record, E> RecordMapper<R, E> provide(
+    //              RecordType<R> recordType, Class<? extends E> type) {
+    //            if (type == LocalizedText.class) {
+    //              return new RecordMapper<R, E>() {
+    //                @Override
+    //                public E map(R record) {
+    //                  return (E) record.getValue("ID");
+    //                }
+    //              };
+    //            }
+    //            // Fall back to jOOQ's DefaultRecordMapper, which maps records onto
+    //            // POJOs using reflection.
+    //            return new DefaultRecordMapper(recordType, type);
+    //          }
+    //        });
     return jooqConfiguration;
   }
 }

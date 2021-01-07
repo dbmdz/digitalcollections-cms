@@ -260,6 +260,26 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
     return new PageResponseImpl<>(personEntries);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public PageResponse<Person> findByLocationOfDeath(PageRequest pageRequest, UUID uuidGeoLocation) {
+    // FIXME: JOOQ JSONB mapping not aware of our custom jackson objectmapper. just uses a new
+    // instance of objectmapper.
+    //    List<Person> persons =
+    //        jooq.selectFrom(Persons.PERSONS)
+    //            .where(Persons.PERSONS.LOCATIONOFDEATH.eq(uuidGeoLocation))
+    //            .fetchInto(Person.class);
+    //    return new PageResponseImpl<>(persons);
+
+    // solution (still) with modelmapper framework
+    List<PersonsRecord> queryResults =
+        jooq.selectFrom(Persons.PERSONS)
+            .where(Persons.PERSONS.LOCATIONOFDEATH.eq(uuidGeoLocation))
+            .fetchInto(PersonsRecord.class);
+    List<Person> personEntries = convertRecordsToModelObjects(queryResults);
+    return new PageResponseImpl<>(personEntries);
+  }
+
   private List<Person> convertRecordsToModelObjects(List<PersonsRecord> records) {
     List<Person> objects = new ArrayList<>();
     for (PersonsRecord record : records) {
@@ -270,12 +290,16 @@ public class PersonRepositoryImpl extends IdentifiableRepositoryImpl<Person>
   }
 
   private Person convertRecordToModelObject(PersonsRecord record) {
-    PersonImpl person = modelMapper.map(record, PersonImpl.class);
+    if (record == null) {
+      return null;
+    }
+    //      JsonNode personNode = new ObjectMapper().readTree(record.formatJSON());
+    //      PersonImpl person = modelMapper.map(personNode, PersonImpl.class);
+    Person person = modelMapper.map(record, PersonImpl.class);
     try {
-      // FIXME model mapper does only map refid, all other fields are empty (need specified
-      // mappers?)
+      // FIXME model mapper does only map refid, all other fields are empty (need
+      // specified mappers?)
       person.setLabel(objectMapper.readValue(record.getLabel().data(), LocalizedText.class));
-
     } catch (JsonProcessingException ex) {
       LOGGER.error("Error mapping record to object");
     }
